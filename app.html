@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#ffd84a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1a12" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="손끝으로 넘기며 외우는 영단어 학습. 간격 반복(FSRS)과 단어 가족으로 기억합니다.">
+<title>Wordies</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Nunito:wght@600;800&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main id="app">
+
+  <!-- 온보딩 -->
+  <section class="screen" id="onboard" hidden>
+    <div class="ob-slides">
+      <div class="ob-slide" data-i="0">
+        <div class="ob-art" aria-hidden="true">
+          <div class="mini-card"><span>invisible</span></div>
+          <span class="ob-tap"></span>
+        </div>
+        <h2>떠올리고, 확인해요</h2>
+        <p>뜻을 보기 전에 먼저 떠올려 보세요.<br>꺼내 보려는 순간 기억이 단단해집니다.</p>
+      </div>
+      <div class="ob-slide" data-i="1">
+        <div class="ob-art" aria-hidden="true">
+          <div class="mini-card"><span>visit</span></div>
+          <span class="arr l">몰라요</span><span class="arr r">알아요</span><span class="arr u">너무 쉬움</span><span class="arr d">되돌리기</span>
+        </div>
+        <h2>버튼 없이 손끝으로</h2>
+        <p>탭하면 뜻이 보이고, 밀어서 답해요.<br>→ 알아요 · ← 몰라요 · ↑ 너무 쉬움 · ↓ 되돌리기</p>
+      </div>
+      <div class="ob-slide" data-i="2">
+        <div class="ob-art fam" aria-hidden="true">
+          <span class="root">vis</span><span>visit</span><span>vision</span><span>television</span>
+        </div>
+        <h2>단어는 가족으로, 잊을 때쯤 다시</h2>
+        <p>뿌리가 같은 단어를 묶어 보고,<br>잊어버릴 즈음에 다시 꺼내 드려요.</p>
+      </div>
+    </div>
+    <div class="ob-dots"><i></i><i></i><i></i></div>
+    <p class="hint bottom">화면을 탭해서 다음으로</p>
+  </section>
+
+  <!-- 홈 -->
+  <section class="screen" id="home" hidden>
+    <header class="top">
+      <h1 class="brand">Wordies</h1>
+      <span class="chip" id="streak"></span>
+    </header>
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="86" class="ring-bg"/>
+        <circle cx="100" cy="100" r="86" class="ring-fg" id="ring-fg"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-num" id="ring-num">0</div>
+        <div class="ring-sub" id="ring-sub">/ 20분</div>
+      </div>
+    </div>
+    <p class="today-line" id="today-line"></p>
+    <div class="week" id="week"></div>
+    <div class="side-hints"><span>← 목표</span><span>설정 →</span></div>
+    <p class="hint bottom swipe-up" id="start-hint"><b>↑</b> 밀어서 시작</p>
+  </section>
+
+  <!-- 학습 -->
+  <section class="screen" id="study" hidden>
+    <div class="progress"><i id="prog"></i></div>
+    <div class="mode-label" id="mode-label"></div>
+    <div class="stage" id="stage">
+      <article class="card" id="card"></article>
+      <div class="stamp know">알아요</div>
+      <div class="stamp again">몰라요</div>
+      <div class="stamp easy">너무 쉬움</div>
+      <div class="stamp undo">되돌리기</div>
+    </div>
+    <div class="ghost-hints" id="ghost">
+      <span class="l">← 몰라요</span><span class="r">알아요 →</span>
+    </div>
+    <div class="toast" id="toast" hidden></div>
+  </section>
+
+  <!-- 완료 -->
+  <section class="screen" id="done" hidden>
+    <div class="done-badge" id="done-badge" aria-hidden="true">
+      <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><path d="M36 62 L53 78 L86 44"/></svg>
+    </div>
+    <h2 id="done-title">오늘 목표 달성!</h2>
+    <div class="done-stats" id="done-stats"></div>
+    <div class="goal-move" id="goal-move"></div>
+    <p class="quote">잊어버린 순간이 가장 잘 기억되는 순간이에요.</p>
+    <p class="hint bottom"><b>↓</b> 밀어서 홈으로</p>
+  </section>
+
+  <!-- 목표 -->
+  <section class="screen scroll" id="goals" hidden>
+    <header class="top"><h1 class="title">목표</h1><span class="hint-inline">홈 →</span></header>
+    <div class="goal-block">
+      <div class="goal-row"><span>이번 주 새 단어</span><b id="g-week-num"></b></div>
+      <div class="bar"><i id="g-week"></i></div>
+    </div>
+    <div class="goal-block">
+      <div class="goal-row"><span>이번 달 새 단어</span><b id="g-month-num"></b></div>
+      <div class="bar"><i id="g-month"></i></div>
+    </div>
+    <div class="goal-block">
+      <div class="goal-row"><span>레벨별 숙달</span><b id="g-total"></b></div>
+      <div class="stairs" id="stairs"></div>
+      <p class="small" id="milestone"></p>
+    </div>
+    <div class="goal-block">
+      <div class="goal-row"><span id="cal-title">이번 달</span><b id="cal-days"></b></div>
+      <div class="cal-head"><i>월</i><i>화</i><i>수</i><i>목</i><i>금</i><i>토</i><i>일</i></div>
+      <div class="cal" id="cal"></div>
+    </div>
+  </section>
+
+  <!-- 설정 -->
+  <section class="screen scroll" id="settings" hidden>
+    <header class="top"><span class="hint-inline">← 홈</span><h1 class="title">설정</h1></header>
+    <div class="set-block">
+      <label class="set-label">하루 학습 시간</label>
+      <p class="small">복습에 걸릴 시간을 먼저 빼고, 남는 시간만큼 새 단어가 들어와요.</p>
+      <div class="seg" id="set-minutes" role="radiogroup" aria-label="하루 학습 시간">
+        <button data-v="10" role="radio">10분</button><button data-v="15" role="radio">15분</button><button data-v="20" role="radio">20분</button><button data-v="30" role="radio">30분</button>
+      </div>
+    </div>
+    <div class="set-block">
+      <label class="set-label" for="set-week">주간 목표 (새 단어)</label>
+      <input id="set-week" type="number" min="5" max="300" inputmode="numeric">
+      <label class="set-label" for="set-month">월간 목표 (새 단어)</label>
+      <input id="set-month" type="number" min="20" max="1000" inputmode="numeric">
+    </div>
+    <div class="set-block">
+      <label class="set-label">발음</label>
+      <div class="seg" id="set-voice" role="radiogroup" aria-label="발음">
+        <button data-v="en-US" role="radio">미국</button><button data-v="en-GB" role="radio">영국</button>
+      </div>
+    </div>
+    <div class="set-block">
+      <label class="set-label">학습 기록</label>
+      <p class="small">기록은 이 기기에만 저장돼요. 다른 기기로 옮기려면 내보낸 파일을 불러오세요.</p>
+      <div class="row">
+        <button class="plain" id="btn-export">파일로 내보내기</button>
+        <label class="plain" for="file-import">파일 불러오기</label>
+        <input type="file" id="file-import" accept="application/json" hidden>
+      </div>
+      <button class="plain danger" id="btn-reset">처음부터 다시 시작</button>
+      <p class="small" id="reset-confirm" hidden>정말 지울까요? <button class="plain danger" id="btn-reset-yes">모두 지우기</button> <button class="plain" id="btn-reset-no">취소</button></p>
+    </div>
+    <div class="set-block">
+      <label class="set-label">학습 원리</label>
+      <ul class="why">
+        <li><b>떠올리기 먼저</b> 정답을 보기 전에 기억에서 꺼내 보는 것이 가장 강한 복습입니다.</li>
+        <li><b>잊을 때쯤 다시</b> FSRS 알고리즘이 기억 확률이 90%로 떨어질 때 복습을 잡아요.</li>
+        <li><b>단어 가족</b> 어근이 같은 단어를 함께 보면 하나를 만날 때마다 가족 전체가 복습돼요.</li>
+        <li><b>한 계단씩</b> 고르기 → 떠올리기 → 거꾸로 떠올리기 → 직접 쓰기로 올라가요.</li>
+      </ul>
+    </div>
+    <p class="small center"><a href="index.html" style="color:var(--accent)">학습 가이드와 학습 곡선 보기</a></p>
+    <p class="small center">Wordies v0.1 · 단어 목록은 Oxford 3000 A1을 참고했고, 뜻·예문·어원 메모는 직접 작성했습니다.</p>
+  </section>
+
+</main>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
