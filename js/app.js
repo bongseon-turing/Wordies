@@ -26,7 +26,7 @@ function show(id) {
   const el = document.getElementById(id);
   el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
   screen = id;
-  ({ home: renderHome, goals: renderGoals, settings: renderSettings }[id] || (() => {}))();
+  ({ home: renderHome, settings: renderSettings }[id] || (() => {}))();
 }
 
 // ---------- 제스처 ----------
@@ -114,7 +114,9 @@ function renderHome() {
     const hit = d.sec >= budget * 0.8;
     return `<div class="wd ${hit ? "hit" : ""} ${d.key === t ? "today" : ""} ${d.future ? "future" : ""}"><div class="col"><i style="height:${pct}%"></i></div><span>${names[i]}</span></div>`;
   }).join("");
-  $("#start-hint").innerHTML = todo ? `<b>↑</b> 밀어서 시작` : `<b>↑</b> 밀어서 다시 보기`;
+  $("#today-card").classList.toggle("done", !todo);
+  $("#start-hint").textContent = todo ? "탭해서 시작" : "오늘 완료";
+  renderGoals(s);
 }
 
 // ---------- 학습 ----------
@@ -130,11 +132,11 @@ function startSession() {
   render(first);
 }
 function toastHome() {
-  const el = $("#today-line");
+  const el = $("#today-card");
   el.animate([{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "none" }], { duration: 300 });
 }
 
-const MODE_LABEL = { intro: "새 단어", choice: "뜻 고르기", recall: "뜻 떠올리기", reverse: "영어로 떠올리기", spell: "직접 쓰기", quiz: "마무리 퀴즈" };
+const MODE_LABEL = { intro: "새 단어", choice: "뜻 고르기", cloze: "빈칸 채우기", recall: "뜻 떠올리기", reverse: "영어로 떠올리기", spell: "직접 쓰기", quiz: "마무리 퀴즈" };
 
 function exampleHtml(w, blank) {
   const i = w.ex.indexOf(w.exForm);
@@ -193,7 +195,7 @@ function render(item) {
       <input class="spell-input" id="spell" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="빈칸에 들어갈 영어 단어" placeholder="${w.word[0]}…">
       <div class="tap-hint">입력하고 엔터</div></div>`;
     ghost = ["", ""];
-  } else if (item.mode === "quiz") {
+  } else if (item.mode === "quiz" || item.mode === "cloze") {
     const opts = shuffle([w.word, ...distractors(w, 3, (x) => x.word)]);
     html = `<div class="front">${exampleHtml(w, true)}</div><div class="choices">${opts.map((o) => `<div class="choice en" role="button" tabindex="0" data-v="${esc(o)}">${esc(o)}</div>`).join("")}</div>`;
     ghost = ["", "빈칸에 맞는 단어를 탭"];
@@ -249,11 +251,11 @@ function choose(el, item, w) {
   if (locked) return;
   locked = true;
   const ms = performance.now() - shownAt;
-  const right = item.mode === "quiz" ? w.word : w.meaning[0];
+  const right = item.mode === "choice" ? w.meaning[0] : w.word;
   const ok = el.dataset.v === right;
   el.classList.add(ok ? "right" : "wrong");
   if (!ok) $("#card").querySelectorAll(".choice").forEach((c) => c.dataset.v === right && c.classList.add("right"));
-  if (item.mode === "quiz") speak(w.word);
+  if (item.mode !== "choice") speak(w.word);
   setTimeout(() => commit(ok ? "know" : "again", { ms }), ok ? 550 : 1300);
 }
 
@@ -293,13 +295,22 @@ function finish() {
   $("#done-title").textContent = hit ? "오늘 목표 달성!" : "오늘 학습 완료";
   $("#done-badge").style.opacity = hit ? 1 : 0.7;
   $("#done-stats").innerHTML = `
-    <div><b>${s.today.rev}</b><span>복습</span></div>
+    <div><b>${s.today.rev}</b><span>푼 문제</span></div>
     <div><b>${s.today.newc}</b><span>새 단어</span></div>
     <div><b>${Math.round(s.today.sec / 60)}</b><span>분</span></div>`;
-  const before = Math.round((statsBefore.weekNew / s.weekGoal) * 100), after = Math.round((s.weekNew / s.weekGoal) * 100);
-  $("#goal-move").innerHTML = `<div class="goal-row"><span>이번 주 목표</span><b>${Math.min(before, 999)}% → ${Math.min(after, 999)}%</b></div><div class="bar"><i id="gm-bar" style="width:${Math.min(100, before)}%"></i></div>`;
+  const pc = (a, b) => Math.round((a / Math.max(1, b)) * 100);
+  const rows = [
+    ["이번 주 목표", pc(statsBefore.weekNew, s.weekGoal), pc(s.weekNew, s.weekGoal)],
+    ["이번 달 목표", pc(statsBefore.monthNew, s.monthGoal), pc(s.monthNew, s.monthGoal)],
+    [`전체 숙달 ${s.totalMastered}/${s.totalWords}`, pc(statsBefore.totalMastered, s.totalWords), pc(s.totalMastered, s.totalWords)],
+  ];
+  $("#goal-move").innerHTML = rows.map(([label, a, b], i) =>
+    `<div><div class="goal-row"><span>${label}</span><b>${a === b ? `${b}%` : `${a}% → ${b}%`}</b></div><div class="bar"><i data-to="${Math.min(100, b)}" style="width:${Math.min(100, a)}%"></i></div></div>`).join("");
+  const tmr = new Date(); tmr.setDate(tmr.getDate() + 1); tmr.setHours(23, 59, 59);
+  const dueTmr = Object.values(state.cards).filter((c) => new Date(c.fsrs.due) <= tmr).length;
+  $("#next-review").textContent = dueTmr ? `내일 복습할 단어 ${dueTmr}개가 준비돼 있어요.` : "내일은 새 단어로 시작해요.";
   show("done");
-  requestAnimationFrame(() => setTimeout(() => ($("#gm-bar").style.width = Math.min(100, after) + "%"), 300));
+  requestAnimationFrame(() => setTimeout(() => document.querySelectorAll("#goal-move i").forEach((b) => (b.style.width = b.dataset.to + "%")), 300));
   if (hit && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
 }
 function confetti() {
@@ -326,7 +337,7 @@ function setupCardGestures() {
     if (!current) return false;
     if (dir === "down") return session.canUndo();
     const m = current.mode;
-    if (m === "choice" || m === "quiz") return false;
+    if (m === "choice" || m === "quiz" || m === "cloze") return false;
     if (m === "spell") return !!pendingSpell && (dir === "right" || dir === "up");
     if (m === "intro") return dir === "right" || dir === "up";
     return revealed;
@@ -382,9 +393,7 @@ function toast(msg) {
 }
 
 // ---------- 목표 ----------
-function renderGoals() {
-  engine = createEngine(words, state);
-  const s = engine.stats();
+function renderGoals(s) {
   const pct = (a, b) => Math.min(100, Math.round((a / Math.max(1, b)) * 100));
   $("#g-week-num").textContent = `${s.weekNew} / ${s.weekGoal}`;
   $("#g-month-num").textContent = `${s.monthNew} / ${s.monthGoal}`;
@@ -407,7 +416,7 @@ function renderGoals() {
   const t = engine.today(), budget = state.settings.minutes * 60;
   const now = new Date();
   $("#cal-title").textContent = `${now.getMonth() + 1}월`;
-  $("#cal-days").textContent = `${s.calendar.filter((d) => d.sec > 0).length}일 학습`;
+  $("#cal-days").textContent = `이번 달 ${s.calendar.filter((d) => d.sec > 0).length}일 학습 · 진할수록 목표 시간에 가까워요`;
   $("#cal").innerHTML = "<span style=\"visibility:hidden\"></span>".repeat(s.firstWeekday) + s.calendar.map((d) => {
     const lv = d.sec === 0 ? "" : d.sec >= budget * 0.8 ? "l3" : d.sec >= budget * 0.4 ? "l2" : "l1";
     return `<span class="${lv} ${d.key === t ? "today" : ""} ${d.future ? "future" : ""}">${d.day}</span>`;
@@ -468,16 +477,12 @@ async function boot() {
   engine = createEngine(words, state);
 
   gestures($("#onboard"), { onTap: obNext, onSwipe: (d) => (d === "left" ? (obNext(), true) : false) });
-  gestures($("#home"), {
-    onSwipe: (d) => {
-      if (d === "up") { startSession(); return true; }
-      if (d === "left") { show("goals"); return true; }
-      if (d === "right") { show("settings"); return true; }
-      return false;
-    },
-  });
-  gestures($("#goals"), { axis: "x", onSwipe: (d) => (d === "right" ? (show("home"), true) : false) });
-  gestures($("#settings"), { axis: "x", onSwipe: (d) => (d === "left" ? (show("home"), true) : false) });
+  const startTap = () => ($("#today-card").classList.contains("done") ? toastHome() : startSession());
+  $("#today-card").addEventListener("click", startTap);
+  const toSettings = () => show("settings"), toHome = () => show("home");
+  $("#go-settings").addEventListener("click", toSettings);
+  $("#back-home").addEventListener("click", toHome);
+  gestures($("#settings"), { axis: "x", onSwipe: (d) => (d === "right" ? (show("home"), true) : false) });
   gestures($("#done"), { onTap: () => show("home"), onSwipe: (d) => (d === "down" ? (show("home"), true) : false) });
   setupCardGestures();
   setupSettings();
@@ -494,13 +499,12 @@ async function boot() {
     if (e.target.matches("input")) return;
     const map = { ArrowRight: "right", ArrowLeft: "left", ArrowUp: "up", ArrowDown: "down" };
     if (screen === "home") {
-      if (e.key === "ArrowUp" || e.key === " ") startSession();
-      else if (e.key === "ArrowLeft") show("goals");
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startTap(); }
       else if (e.key === "ArrowRight") show("settings");
     } else if (screen === "study") {
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); $("#stage").dispatchEvent(new CustomEvent("kbtap")); }
       else if (map[e.key]) { e.preventDefault(); $("#stage").dispatchEvent(new CustomEvent("kbswipe", { detail: map[e.key] })); }
-    } else if ((screen === "goals" && e.key === "ArrowRight") || (screen === "settings" && e.key === "ArrowLeft") || (screen === "done" && (e.key === "ArrowDown" || e.key === "Enter"))) show("home");
+    } else if ((screen === "settings" && (e.key === "ArrowLeft" || e.key === "Escape")) || (screen === "done" && (e.key === "ArrowDown" || e.key === "Enter"))) show("home");
     else if (screen === "onboard" && (e.key === " " || e.key === "Enter" || e.key === "ArrowRight")) obNext();
   });
 

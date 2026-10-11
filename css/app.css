@@ -81,8 +81,18 @@ h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: 
 .ob-dots i.on { width: 22px; border-radius: 4px; background: var(--accent); opacity: 1; }
 
 /* ----- 홈 ----- */
-#home { gap: 14px; }
-.ring-wrap { position: relative; width: min(68vw, 260px); aspect-ratio: 1; margin: 18px auto 4px; }
+#home { gap: 14px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px); }
+.today-card { background: var(--paper); border-radius: 26px; padding: 18px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; box-shadow: var(--shadow); transition: transform .12s; flex-shrink: 0; }
+.today-card:active { transform: scale(.98); }
+.today-card.done { box-shadow: none; cursor: default; }
+.today-card.done:active { transform: none; }
+.start-hint { margin: 2px 0 0; background: var(--accent); color: var(--accent-ink); font: 400 20px var(--f-display); padding: 8px 26px; border-radius: 99px; }
+.today-card.done .start-hint { background: var(--bg-2); color: var(--ink-2); font-size: 17px; }
+.sec-title { font: 400 21px var(--f-display); }
+.links { display: flex; justify-content: center; gap: 22px; padding: 6px 0 4px; }
+.link { color: var(--ink-2); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.goal-block { flex-shrink: 0; }
+.ring-wrap { position: relative; width: min(56vw, 220px); aspect-ratio: 1; margin: 4px auto 0; }
 .ring { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring circle { fill: none; stroke-width: 16; stroke-linecap: round; }
 .ring-bg { stroke: var(--bg-2); }
@@ -92,7 +102,7 @@ h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: 
 .ring-sub { color: var(--ink-2); font-size: 15px; margin-top: 4px; }
 .today-line { text-align: center; margin: 0; color: var(--ink-2); font-size: 15px; }
 .today-line b { color: var(--ink); }
-.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; background: var(--paper); border-radius: 20px; padding: 14px 14px 10px; }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 2px 0; }
 .wd { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
 .wd .col { width: 100%; max-width: 26px; height: 58px; border-radius: 8px; background: var(--bg-2); position: relative; overflow: hidden; }
 .wd .col i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent-soft); border-radius: 8px; transition: height .6s; }
@@ -175,7 +185,7 @@ h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: 
 .done-stats div { background: var(--paper); border-radius: 16px; padding: 10px 16px; min-width: 92px; }
 .done-stats b { display: block; font: 800 26px var(--f-word); font-variant-numeric: tabular-nums; }
 .done-stats span { font-size: 12px; color: var(--ink-2); }
-.goal-move { width: 100%; max-width: 360px; }
+.goal-move { width: 100%; max-width: 360px; display: grid; gap: 10px; text-align: left; }
 .quote { color: var(--ink-2); font-size: 15px; margin: 0; }
 .confetti { position: absolute; width: 8px; height: 14px; border-radius: 2px; top: -20px; animation: fall linear forwards; pointer-events: none; }
 @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
@@ -186,7 +196,7 @@ h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: 
 .goal-row b { font: 800 18px var(--f-word); font-variant-numeric: tabular-nums; }
 .bar { height: 14px; background: var(--bg-2); border-radius: 7px; overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 7px; transition: width .8s cubic-bezier(.2,.8,.2,1); }
-.stairs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: end; height: 150px; }
+.stairs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: end; height: 140px; }
 .step { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 4px; text-align: center; }
 .step .tower { background: var(--bg-2); border-radius: 10px; position: relative; overflow: hidden; }
 .step .tower i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); transition: height .8s; }

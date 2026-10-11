@@ -11,8 +11,7 @@ export const RULES = {
   secPerNew: 50,         // 새 단어 1개 예상 시간(소개 + 학습 단계 + 퀴즈)
   maxNewPerDay: 20,
   reviewCapFactor: 1.5,  // 하루 복습 상한 = 예산 × 1.5
-  learnAheadMin: 20,     // 할 게 없으면 20분 안에 돌아올 학습 카드를 앞당겨 냄
-  maxTriesPerSession: 4, // 한 세션에서 같은 카드는 최대 4번. 넘으면 다음 세션으로
+  maxTriesPerSession: 3, // 한 세션에서 같은 카드는 최대 3번(소개 제외). 넘으면 내일로
   slowFactor: 1.5,       // 응답 시간이 중앙값 × 1.5 초과면 Hard
   defaultSlowMs: 4000,   // 기록 50개 전까지의 기준
   masteredDays: 21,      // 안정성 21일 이상 = 숙달
@@ -69,8 +68,13 @@ export function createEngine(words, state, now = () => new Date()) {
 
   // 오늘 기한인 카드 (보류 제외), 기억 확률 낮은 순
   function dueIds(until = now()) {
+    const t = today();
     return Object.keys(state.cards)
-      .filter((id) => new Date(state.cards[id].fsrs.due) <= until)
+      .filter((id) => {
+        const c = state.cards[id].fsrs;
+        if (new Date(c.due) > until) return false;
+        return !c.last_review || dayKey(c.last_review) !== t; // 오늘 이미 본 카드는 내일로
+      })
       .sort((a, b) => retrievability(a) - retrievability(b));
   }
 
@@ -122,7 +126,8 @@ export function createEngine(words, state, now = () => new Date()) {
   // 카드의 현재 문제 형식
   function modeOf(id) {
     const c = state.cards[id];
-    if (c.fsrs.state === State.New || c.fsrs.state === State.Learning) return "choice";
+    if (c.fsrs.state === State.New) return "choice";
+    if (c.fsrs.state === State.Learning) return (c.fsrs.learning_steps || 0) >= 1 ? "cloze" : "choice";
     if (c.fsrs.state === State.Relearning) return "recall";
     return c.ladder >= 4 ? "spell" : c.ladder === 3 ? "reverse" : "recall";
   }
@@ -227,7 +232,7 @@ export function createEngine(words, state, now = () => new Date()) {
 }
 
 // ---------- 세션 ----------
-// 복습 먼저 → 새 단어 5개씩(소개 후 학습 단계) → 학습 카드는 기한이 되면 다시 → 마무리 빈칸 퀴즈
+// 복습 먼저 → 새 단어 5개씩(소개 → 뜻 고르기 → 예문 빈칸) → 남은 학습 카드는 세션 안에서 마무리
 export function createSession(engine, now = () => new Date()) {
   const p = engine.plan();
   const q = {
@@ -267,10 +272,8 @@ export function createSession(engine, now = () => new Date()) {
     if (!q.main.length) refillNew();
     const m = q.main.shift();
     if (m) return m.kind === "intro" ? { ...m, mode: "intro" } : { ...m, mode: engine.modeOf(m.id) };
-    id = dueLearning(RULES.learnAheadMin);
+    id = dueLearning(24 * 60); // 남은 학습 카드는 세션 안에서 마무리
     if (id) return { id, kind: "card", mode: engine.modeOf(id) };
-    const qz = q.quiz.shift();
-    if (qz) return { id: qz, kind: "quiz", mode: "quiz" };
     return null;
   }
 
@@ -293,7 +296,6 @@ export function createSession(engine, now = () => new Date()) {
       engine.introduce(item.id);
       q.learning.add(item.id);
       q.newBatch -= 1;
-      q.quiz.push(item.id);
       return null;
     }
     if (item.mode === "quiz") {
@@ -319,7 +321,7 @@ export function createSession(engine, now = () => new Date()) {
   }
 
   function remaining() {
-    return q.main.length + q.newIds.length * 3 + q.newBatch * 2 + q.learning.size + q.quiz.length;
+    return q.main.length + q.newIds.length * 3 + q.newBatch * 2 + q.learning.size * 1.5;
   }
 
   return { next, answer, undo, remaining, get done() { return q.done; }, plan: p, canUndo: () => history.length > 0 };

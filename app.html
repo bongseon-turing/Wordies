@@ -51,26 +51,55 @@
     <p class="hint bottom">화면을 탭해서 다음으로</p>
   </section>
 
-  <!-- 홈 -->
-  <section class="screen" id="home" hidden>
+  <!-- 홈: 위에서 아래로 구간별 (오늘 → 이번 주 → 이번 달 → 전체) -->
+  <section class="screen scroll" id="home" hidden>
     <header class="top">
       <h1 class="brand">Wordies</h1>
       <span class="chip" id="streak"></span>
     </header>
-    <div class="ring-wrap">
-      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
-        <circle cx="100" cy="100" r="86" class="ring-bg"/>
-        <circle cx="100" cy="100" r="86" class="ring-fg" id="ring-fg"/>
-      </svg>
-      <div class="ring-center">
-        <div class="ring-num" id="ring-num">0</div>
-        <div class="ring-sub" id="ring-sub">/ 20분</div>
+
+    <div class="today-card" id="today-card" role="button" tabindex="0" aria-label="오늘 학습 시작">
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="86" class="ring-bg"/>
+          <circle cx="100" cy="100" r="86" class="ring-fg" id="ring-fg"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="ring-num">0</div>
+          <div class="ring-sub" id="ring-sub">/ 20분</div>
+        </div>
       </div>
+      <p class="today-line" id="today-line"></p>
+      <p class="start-hint" id="start-hint">탭해서 시작</p>
     </div>
-    <p class="today-line" id="today-line"></p>
-    <div class="week" id="week"></div>
-    <div class="side-hints"><span>← 목표</span><span>설정 →</span></div>
-    <p class="hint bottom swipe-up" id="start-hint"><b>↑</b> 밀어서 시작</p>
+
+    <div class="goal-block">
+      <div class="sec-title">이번 주</div>
+      <div class="week" id="week"></div>
+      <div class="goal-row"><span>새 단어 목표</span><b id="g-week-num"></b></div>
+      <div class="bar"><i id="g-week"></i></div>
+    </div>
+
+    <div class="goal-block">
+      <div class="sec-title" id="cal-title">이번 달</div>
+      <div class="goal-row"><span>새 단어 목표</span><b id="g-month-num"></b></div>
+      <div class="bar"><i id="g-month"></i></div>
+      <div class="cal-head"><i>월</i><i>화</i><i>수</i><i>목</i><i>금</i><i>토</i><i>일</i></div>
+      <div class="cal" id="cal"></div>
+      <p class="small" id="cal-days"></p>
+    </div>
+
+    <div class="goal-block">
+      <div class="sec-title">전체 진행</div>
+      <div class="goal-row"><span>숙달한 단어</span><b id="g-total"></b></div>
+      <div class="stairs" id="stairs"></div>
+      <p class="small" id="milestone"></p>
+    </div>
+
+    <div class="links">
+      <span class="link" id="go-settings" role="button" tabindex="0">설정</span>
+      <a class="link" href="index.html">학습 가이드</a>
+    </div>
   </section>
 
   <!-- 학습 -->
@@ -98,36 +127,14 @@
     <h2 id="done-title">오늘 목표 달성!</h2>
     <div class="done-stats" id="done-stats"></div>
     <div class="goal-move" id="goal-move"></div>
+    <p class="small" id="next-review"></p>
     <p class="quote">잊어버린 순간이 가장 잘 기억되는 순간이에요.</p>
-    <p class="hint bottom"><b>↓</b> 밀어서 홈으로</p>
-  </section>
-
-  <!-- 목표 -->
-  <section class="screen scroll" id="goals" hidden>
-    <header class="top"><h1 class="title">목표</h1><span class="hint-inline">홈 →</span></header>
-    <div class="goal-block">
-      <div class="goal-row"><span>이번 주 새 단어</span><b id="g-week-num"></b></div>
-      <div class="bar"><i id="g-week"></i></div>
-    </div>
-    <div class="goal-block">
-      <div class="goal-row"><span>이번 달 새 단어</span><b id="g-month-num"></b></div>
-      <div class="bar"><i id="g-month"></i></div>
-    </div>
-    <div class="goal-block">
-      <div class="goal-row"><span>레벨별 숙달</span><b id="g-total"></b></div>
-      <div class="stairs" id="stairs"></div>
-      <p class="small" id="milestone"></p>
-    </div>
-    <div class="goal-block">
-      <div class="goal-row"><span id="cal-title">이번 달</span><b id="cal-days"></b></div>
-      <div class="cal-head"><i>월</i><i>화</i><i>수</i><i>목</i><i>금</i><i>토</i><i>일</i></div>
-      <div class="cal" id="cal"></div>
-    </div>
+    <p class="hint bottom">탭하거나 <b>↓</b> 밀어서 홈으로</p>
   </section>
 
   <!-- 설정 -->
   <section class="screen scroll" id="settings" hidden>
-    <header class="top"><span class="hint-inline">← 홈</span><h1 class="title">설정</h1></header>
+    <header class="top"><span class="link" id="back-home" role="button" tabindex="0">← 홈</span><h1 class="title">설정</h1></header>
     <div class="set-block">
       <label class="set-label">하루 학습 시간</label>
       <p class="small">복습에 걸릴 시간을 먼저 빼고, 남는 시간만큼 새 단어가 들어와요.</p>
@@ -167,8 +174,7 @@
         <li><b>한 계단씩</b> 고르기 → 떠올리기 → 거꾸로 떠올리기 → 직접 쓰기로 올라가요.</li>
       </ul>
     </div>
-    <p class="small center"><a href="index.html" style="color:var(--accent)">학습 가이드와 학습 곡선 보기</a></p>
-    <p class="small center">Wordies v0.1 · 단어 목록은 Oxford 3000 A1을 참고했고, 뜻·예문·어원 메모는 직접 작성했습니다.</p>
+        <p class="small center">Wordies v0.2 · 단어 목록은 Oxford 3000 A1을 참고했고, 뜻·예문·어원 메모는 직접 작성했습니다.</p>
   </section>
 
 </main>

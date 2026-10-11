@@ -1,5 +1,5 @@
 // 오프라인 캐시. 앱 파일이 바뀌면 VERSION을 올린다.
-const VERSION = "wordies-v0.1.1";
+const VERSION = "wordies-v0.2.0";
 const ASSETS = ["./", "index.html", "app.html", "css/landing.css", "js/landing.js", "data/curve.json", "css/app.css", "js/app.js", "js/engine.js", "js/vendor/ts-fsrs.mjs", "data/words.json", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {
